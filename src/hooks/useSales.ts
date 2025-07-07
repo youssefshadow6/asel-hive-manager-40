@@ -53,10 +53,11 @@ export const useSales = () => {
     customerId?: string,
     amountPaid?: number,
     paymentMethod?: string,
-    notes?: string
+    notes?: string,
+    shippingCost?: number
   ) => {
     try {
-      const totalAmount = quantity * salePrice;
+      const totalAmount = (quantity * salePrice) + (shippingCost || 0);
       const actualAmountPaid = amountPaid !== undefined ? amountPaid : totalAmount;
       
       // Determine payment status and method
@@ -106,7 +107,8 @@ export const useSales = () => {
           payment_status: finalPaymentStatus,
           payment_method: finalPaymentMethod,
           sale_date: saleDate || new Date().toISOString(),
-          notes
+          notes,
+          shipping_cost: shippingCost || 0
         } as any)
         .select()
         .single();

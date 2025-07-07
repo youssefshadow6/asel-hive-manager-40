@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { formatCurrency } from '@/utils/currency';
 import type { Database } from '@/integrations/supabase/types';
 
 type RawMaterialRow = Database['public']['Tables']['raw_materials']['Row'];
@@ -156,9 +157,9 @@ export const useRawMaterials = () => {
         console.error('Error creating material receipt:', receiptError);
       }
 
-      // If supplier and cost are provided, update supplier balance
-      // Add total cost excluding shipping to supplier balance
+      // CRITICAL: Always update supplier balance when receiving materials
       if (supplierId && finalTotalCost && finalTotalCost > 0) {
+        // Add the full material cost (excluding shipping) to supplier balance
         const materialCostOnly = finalTotalCost - (shippingCost || 0);
         
         if (materialCostOnly > 0) {
@@ -167,8 +168,9 @@ export const useRawMaterials = () => {
             .insert({
               supplier_id: supplierId,
               transaction_type: 'purchase',
-              amount: materialCostOnly, // Exclude shipping cost
-              description: `Purchase of ${quantity} ${material.unit} of ${material.name} (excluding shipping)`
+              amount: materialCostOnly,
+              description: `Purchase of ${quantity} ${material.unit} of ${material.name}`,
+              transaction_date: new Date().toISOString()
             } as any);
 
           if (transactionError) {
@@ -177,6 +179,11 @@ export const useRawMaterials = () => {
               title: 'Warning',
               description: 'Material received but supplier balance not updated',
               variant: 'destructive'
+            });
+          } else {
+            toast({
+              title: 'Success',
+              description: `Material received and supplier balance updated with ${formatCurrency(materialCostOnly)}`,
             });
           }
         }

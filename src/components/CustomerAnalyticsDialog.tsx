@@ -21,7 +21,7 @@ export const CustomerAnalyticsDialog = ({
   customer,
   language
 }: CustomerAnalyticsDialogProps) => {
-  const { analytics, loading, fetchCustomerAnalytics } = useCustomerAnalytics();
+  const { analytics, loading, refetch } = useCustomerAnalytics(customer?.id);
 
   const translations = {
     en: {
@@ -78,9 +78,9 @@ export const CustomerAnalyticsDialog = ({
 
   useEffect(() => {
     if (customer && open) {
-      fetchCustomerAnalytics(customer.id);
+      refetch();
     }
-  }, [customer, open]);
+  }, [customer, open, refetch]);
 
   if (!customer) return null;
 
@@ -120,7 +120,7 @@ export const CustomerAnalyticsDialog = ({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{analytics.total_purchases}</div>
+                  <div className="text-2xl font-bold">{analytics.totalPurchases}</div>
                 </CardContent>
               </Card>
               
@@ -132,7 +132,7 @@ export const CustomerAnalyticsDialog = ({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{formatCurrency(analytics.total_spent)}</div>
+                  <div className="text-2xl font-bold">{formatCurrency(analytics.totalAmount)}</div>
                 </CardContent>
               </Card>
             </div>
@@ -151,7 +151,7 @@ export const CustomerAnalyticsDialog = ({
                     <Banknote className="h-8 w-8 text-green-600" />
                     <div>
                       <p className="text-sm text-gray-600">{t.cashSalesPercentage}</p>
-                      <p className="text-lg font-semibold">{analytics.payment_behavior.cash_sales_percentage}%</p>
+                      <p className="text-lg font-semibold">{analytics.paymentBehavior.cashPercentage.toFixed(1)}%</p>
                     </div>
                   </div>
                   
@@ -159,23 +159,15 @@ export const CustomerAnalyticsDialog = ({
                     <CreditCard className="h-8 w-8 text-blue-600" />
                     <div>
                       <p className="text-sm text-gray-600">{t.creditSalesPercentage}</p>
-                      <p className="text-lg font-semibold">{analytics.payment_behavior.credit_sales_percentage}%</p>
+                      <p className="text-lg font-semibold">{analytics.paymentBehavior.creditPercentage.toFixed(1)}%</p>
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
                     <Clock className="h-8 w-8 text-purple-600" />
                     <div>
-                      <p className="text-sm text-gray-600">{t.onTimePaymentPercentage}</p>
-                      <p className="text-lg font-semibold">{analytics.payment_behavior.on_time_payment_percentage}%</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg">
-                    <Calendar className="h-8 w-8 text-orange-600" />
-                    <div>
                       <p className="text-sm text-gray-600">{t.avgPaymentDelay}</p>
-                      <p className="text-lg font-semibold">{analytics.payment_behavior.average_payment_delay_days} {t.days}</p>
+                      <p className="text-lg font-semibold">{analytics.paymentBehavior.avgPaymentDelay} {t.days}</p>
                     </div>
                   </div>
                   
@@ -183,17 +175,9 @@ export const CustomerAnalyticsDialog = ({
                     <Award className="h-8 w-8 text-gray-600" />
                     <div>
                       <p className="text-sm text-gray-600">{t.paymentReliability}</p>
-                      <Badge className={getReliabilityColor(analytics.payment_behavior.payment_reliability)}>
-                        {analytics.payment_behavior.payment_reliability}
-                      </Badge>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3 p-3 bg-indigo-50 rounded-lg">
-                    <TrendingUp className="h-8 w-8 text-indigo-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">{t.preferredPaymentMethod}</p>
-                      <p className="text-lg font-semibold">{analytics.payment_behavior.preferred_payment_method}</p>
+                      <p className="text-lg font-semibold">
+                        {analytics.paymentBehavior.creditPercentage > 50 ? 'Credit Preferred' : 'Cash Preferred'}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -209,11 +193,15 @@ export const CustomerAnalyticsDialog = ({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {analytics.most_active_days.length > 0 ? (
+                {analytics.weeklyPurchasePattern.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {analytics.most_active_days.map((day, index) => (
+                    {analytics.weeklyPurchasePattern
+                      .filter(day => day.count > 0)
+                      .sort((a, b) => b.count - a.count)
+                      .slice(0, 3)
+                      .map((day, index) => (
                       <Badge key={index} variant="secondary">
-                        {day.trim()}
+                        {day.day} ({day.count} {t.purchases})
                       </Badge>
                     ))}
                   </div>
@@ -229,21 +217,18 @@ export const CustomerAnalyticsDialog = ({
                 <CardTitle className="text-lg">{t.topProducts}</CardTitle>
               </CardHeader>
               <CardContent>
-                {analytics.most_purchased_products.length > 0 ? (
+                {analytics.mostPurchasedProducts.length > 0 ? (
                   <div className="space-y-3">
-                    {analytics.most_purchased_products.map((product, index) => (
+                    {analytics.mostPurchasedProducts.map((product, index) => (
                       <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                         <div>
-                          <p className="font-medium">{language === 'ar' ? product.product_name_ar : product.product_name}</p>
+                          <p className="font-medium">{product.productName}</p>
                           <p className="text-sm text-muted-foreground">
-                            {product.purchase_count} {t.purchases}
+                            {product.percentage.toFixed(1)}% of total purchases
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium">{t.quantity}: {product.total_quantity}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {t.amount}: {formatCurrency(product.total_amount)}
-                          </p>
+                          <p className="font-medium">{t.quantity}: {product.quantity}</p>
                         </div>
                       </div>
                     ))}
@@ -260,28 +245,32 @@ export const CustomerAnalyticsDialog = ({
                 <CardTitle className="text-lg">{t.nextOrderPrediction}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <div className="flex justify-between">
                     <span className="font-medium">{t.predictedDate}:</span>
                     <span>
-                      {analytics.next_order_prediction.predicted_date 
-                        ? formatGregorianDate(analytics.next_order_prediction.predicted_date, language)
+                      {analytics.predictedNextPurchase.date 
+                        ? formatGregorianDate(analytics.predictedNextPurchase.date, language)
                         : t.noData}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">{t.confidence}:</span>
                     <Badge variant={
-                      analytics.next_order_prediction.confidence === 'High' ? 'default' :
-                      analytics.next_order_prediction.confidence === 'Medium' ? 'secondary' : 'outline'
+                      analytics.predictedNextPurchase.confidence > 70 ? 'default' :
+                      analytics.predictedNextPurchase.confidence > 40 ? 'secondary' : 'outline'
                     }>
-                      {analytics.next_order_prediction.confidence}
+                      {analytics.predictedNextPurchase.confidence}%
                     </Badge>
                   </div>
-                  {analytics.next_order_prediction.avg_days_between_orders && (
-                    <div className="flex justify-between">
-                      <span className="font-medium">{t.avgDaysBetween}:</span>
-                      <span>{analytics.next_order_prediction.avg_days_between_orders} {t.days}</span>
+                  {analytics.predictedNextPurchase.recommendedProducts.length > 0 && (
+                    <div>
+                      <p className="font-medium mb-2">Recommended Products:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {analytics.predictedNextPurchase.recommendedProducts.map((product, index) => (
+                          <Badge key={index} variant="outline">{product}</Badge>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
