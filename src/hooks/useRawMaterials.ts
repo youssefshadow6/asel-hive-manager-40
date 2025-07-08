@@ -36,9 +36,9 @@ export const useRawMaterials = () => {
     }
   };
 
-  const addMaterial = async (material: RawMaterialInsert & { total_cost?: number; supplier_id?: string }) => {
+  const addMaterial = async (material: RawMaterialInsert & { total_cost?: number; supplier_id?: string; shipping_cost?: number }) => {
     try {
-      const { total_cost, supplier_id, ...materialData } = material;
+      const { total_cost, supplier_id, shipping_cost, ...materialData } = material;
       
       // Calculate unit cost: Total Cost ÷ Quantity
       let finalCostPerUnit = 0;

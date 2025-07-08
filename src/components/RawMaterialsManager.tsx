@@ -33,7 +33,6 @@ export const RawMaterialsManager = ({ language }: RawMaterialsManagerProps) => {
     unit: 'kg' as MaterialUnit,
     min_threshold: 0,
     current_stock: 0,
-    cost_per_unit: 0,
     shipping_cost: 0,
     total_cost: 0,
     supplier: '',
@@ -142,7 +141,8 @@ export const RawMaterialsManager = ({ language }: RawMaterialsManagerProps) => {
         min_threshold: newMaterial.min_threshold,
         supplier: newMaterial.supplier,
         supplier_id: supplierId || null,
-        total_cost: newMaterial.total_cost || 0
+        total_cost: newMaterial.total_cost || 0,
+        shipping_cost: newMaterial.shipping_cost || 0
       });
       
       setNewMaterial({
@@ -151,7 +151,6 @@ export const RawMaterialsManager = ({ language }: RawMaterialsManagerProps) => {
         unit: 'kg',
         min_threshold: 0,
         current_stock: 0,
-        cost_per_unit: 0,
         shipping_cost: 0,
         total_cost: 0,
         supplier: '',
@@ -282,6 +281,17 @@ export const RawMaterialsManager = ({ language }: RawMaterialsManagerProps) => {
                     step="0.01"
                     value={newMaterial.total_cost}
                     onChange={(e) => setNewMaterial({...newMaterial, total_cost: Number(e.target.value)})}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="shippingCost">{t.shippingCost}</Label>
+                  <Input
+                    id="shippingCost"
+                    type="number"
+                    step="0.01"
+                    value={newMaterial.shipping_cost}
+                    onChange={(e) => setNewMaterial({...newMaterial, shipping_cost: Number(e.target.value)})}
                     placeholder="0.00"
                   />
                 </div>

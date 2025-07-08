@@ -11,17 +11,13 @@ interface DataResetResponse {
 export const useDataReset = () => {
   const [loading, setLoading] = useState(false);
 
-  const resetAllData = async (password: string) => {
+  const resetAllData = async () => {
     setLoading(true);
     try {
-      // Trim the password to remove any extra spaces
-      const trimmedPassword = password.trim();
-      
-      console.log('Attempting data reset with password length:', trimmedPassword.length);
-      console.log('Password starts with:', trimmedPassword.substring(0, 3));
+      console.log('Attempting data reset...');
       
       const { data, error } = await supabase.rpc('reset_user_data', {
-        admin_password: trimmedPassword
+        admin_password: 'sarah2013'
       });
 
       if (error) {
