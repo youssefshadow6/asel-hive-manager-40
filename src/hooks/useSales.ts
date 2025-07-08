@@ -93,7 +93,7 @@ export const useSales = () => {
         throw new Error('Insufficient stock');
       }
 
-      // Insert sale record
+      // Insert sale record (without shipping_cost since column doesn't exist yet)
       const { data: saleRecord, error: saleError } = await supabase
         .from('sales_records')
         .insert({
@@ -107,8 +107,7 @@ export const useSales = () => {
           payment_status: finalPaymentStatus,
           payment_method: finalPaymentMethod,
           sale_date: saleDate || new Date().toISOString(),
-          notes,
-          shipping_cost: shippingCost || 0
+          notes: notes ? `${notes}${shippingCost ? ` | Shipping: ${shippingCost}` : ''}` : (shippingCost ? `Shipping: ${shippingCost}` : undefined)
         } as any)
         .select()
         .single();
