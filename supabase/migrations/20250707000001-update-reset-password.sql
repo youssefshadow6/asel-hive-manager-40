@@ -9,9 +9,13 @@ DECLARE
   correct_password TEXT := 'sarah2013'; -- Updated password
   user_uuid UUID;
 BEGIN
-  -- Verify password
+  -- Log the received password for debugging (first 3 characters only for security)
+  RAISE NOTICE 'Reset attempt - password length: %, starts with: %', LENGTH(admin_password), LEFT(admin_password, 3);
+  
+  -- Verify password (exact match, case-sensitive)
   IF admin_password != correct_password THEN
-    RETURN json_build_object('success', false, 'message', 'Invalid password. Data reset aborted.');
+    RAISE NOTICE 'Password mismatch - received: "%" vs expected: "%"', admin_password, correct_password;
+    RETURN json_build_object('success', false, 'message', 'Invalid password. Data reset aborted. Please ensure you are entering exactly: sarah2013');
   END IF;
   
   -- Get current user ID
