@@ -140,11 +140,9 @@ export const RawMaterialsManager = ({ language }: RawMaterialsManagerProps) => {
         unit: newMaterial.unit,
         current_stock: newMaterial.current_stock,
         min_threshold: newMaterial.min_threshold,
-        cost_per_unit: newMaterial.cost_per_unit || 0,
-        shipping_cost: newMaterial.shipping_cost || 0,
-        total_cost: newMaterial.total_cost || 0,
         supplier: newMaterial.supplier,
-        supplier_id: supplierId || null
+        supplier_id: supplierId || null,
+        total_cost: newMaterial.total_cost || 0
       });
       
       setNewMaterial({
@@ -277,28 +275,6 @@ export const RawMaterialsManager = ({ language }: RawMaterialsManagerProps) => {
                 />
               </div>
                 <div>
-                  <Label htmlFor="costPerUnit">{t.costPerUnit}</Label>
-                  <Input
-                    id="costPerUnit"
-                    type="number"
-                    step="0.01"
-                    value={newMaterial.cost_per_unit}
-                    onChange={(e) => setNewMaterial({...newMaterial, cost_per_unit: Number(e.target.value)})}
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="shippingCost">{t.shippingCost}</Label>
-                  <Input
-                    id="shippingCost"
-                    type="number"
-                    step="0.01"
-                    value={newMaterial.shipping_cost}
-                    onChange={(e) => setNewMaterial({...newMaterial, shipping_cost: Number(e.target.value)})}
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
                   <Label htmlFor="totalCost">{t.totalCost}</Label>
                   <Input
                     id="totalCost"
@@ -313,7 +289,7 @@ export const RawMaterialsManager = ({ language }: RawMaterialsManagerProps) => {
                   <div className="p-3 bg-amber-50 rounded-lg">
                     <div className="text-sm text-gray-600">{t.unitCostCalculated}:</div>
                     <div className="font-bold text-amber-700">
-                      {formatCurrency((newMaterial.total_cost + newMaterial.shipping_cost) / newMaterial.current_stock, language)}
+                      {formatCurrency(newMaterial.total_cost / newMaterial.current_stock, language)}
                     </div>
                   </div>
                 )}

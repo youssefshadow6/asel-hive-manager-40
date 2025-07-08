@@ -36,29 +36,51 @@ export const useRawMaterials = () => {
     }
   };
 
-  const addMaterial = async (material: RawMaterialInsert & { shipping_cost?: number; total_cost?: number }) => {
+  const addMaterial = async (material: RawMaterialInsert & { total_cost?: number; supplier_id?: string }) => {
     try {
-      const { shipping_cost, total_cost, ...materialData } = material;
+      const { total_cost, supplier_id, ...materialData } = material;
       
-      // Calculate unit cost: (Total Cost + Shipping Cost) ÷ Quantity
-      let finalCostPerUnit = materialData.cost_per_unit || 0;
+      // Calculate unit cost: Total Cost ÷ Quantity
+      let finalCostPerUnit = 0;
       
       if (total_cost && materialData.current_stock > 0) {
-        finalCostPerUnit = (total_cost + (shipping_cost || 0)) / materialData.current_stock;
-      } else if (shipping_cost && materialData.cost_per_unit) {
-        finalCostPerUnit = materialData.cost_per_unit + shipping_cost;
+        finalCostPerUnit = total_cost / materialData.current_stock;
       }
 
       const { data, error } = await supabase
         .from('raw_materials')
         .insert({
           ...materialData,
-          cost_per_unit: finalCostPerUnit
+          cost_per_unit: finalCostPerUnit,
+          supplier_id: supplier_id
         } as any)
         .select()
         .single();
 
       if (error) throw error;
+
+      // Add supplier transaction if supplier and total cost are provided
+      if (supplier_id && total_cost && total_cost > 0) {
+        const { error: transactionError } = await supabase
+          .from('supplier_transactions')
+          .insert({
+            supplier_id: supplier_id,
+            transaction_type: 'purchase',
+            amount: total_cost,
+            description: `Purchase of ${materialData.current_stock} ${materialData.unit} of ${materialData.name}`,
+            transaction_date: new Date().toISOString()
+          } as any);
+
+        if (transactionError) {
+          console.error('Error creating supplier transaction:', transactionError);
+          toast({
+            title: 'Warning',
+            description: 'Material added but supplier balance not updated',
+            variant: 'destructive'
+          });
+        }
+      }
+
       setMaterials(prev => [...prev, data]);
       
       toast({
